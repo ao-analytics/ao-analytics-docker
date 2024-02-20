@@ -1,0 +1,43 @@
+services:
+  ao-analytics-db:
+    container_name: ao-analytics-db
+    image: ghcr.io/ao-analytics/ao-analytics-db:main
+    restart: unless-stopped
+    ports:
+      - 5432:5432
+    volumes:
+      - ./data/postgresql:/var/lib/postgresql/data/
+
+  ao-analytics-migrator:
+    container_name: ao-analytics-migrator
+    image: ghcr.io/ao-analytics/ao-analytics-migrator:main
+    volumes:
+      - ./data/migrator:/data
+    restart: no
+    depends_on:
+      - ao-analytics-db
+
+  ao-analytics-nats:
+    container_name: ao-analytics-nats
+    image: ghcr.io/ao-analytics/ao-analytics-nats:main
+    restart: unless-stopped
+    depends_on:
+      - ao-analytics-db
+  
+  ao-analytics-api:
+    container_name: ao-analytics-api
+    image: ghcr.io/ao-analytics/ao-analytics-api:main
+    restart: unless-stopped
+    depends_on:
+      - ao-analytics-db
+    ports:
+      - "8080:8080"
+
+  ao-analytics-frontend:
+    container_name: ao-analytics-frontend
+    image: ghcr.io/ao-analytics/ao-analytics-frontend:main
+    ports:
+      - 8000:80
+    restart: unless-stopped
+    depends_on:
+      - ao-analytics-api
