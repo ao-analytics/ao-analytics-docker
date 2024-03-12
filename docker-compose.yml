@@ -1,7 +1,7 @@
 services:
   ao-analytics-db:
     container_name: ao-analytics-db
-    image: ghcr.io/ao-analytics/ao-analytics-db:main
+    image: ghcr.io/ao-analytics/ao-analytics-db:latest
     restart: unless-stopped
     ports:
       - 5432:5432
@@ -10,7 +10,7 @@ services:
 
   ao-analytics-migrator:
     container_name: ao-analytics-migrator
-    image: ghcr.io/ao-analytics/ao-analytics-migrator:main
+    image: ghcr.io/ao-analytics/ao-analytics-migrator:latest
     volumes:
       - ./data/migrator:/data
     restart: no
@@ -19,14 +19,14 @@ services:
 
   ao-analytics-nats:
     container_name: ao-analytics-nats
-    image: ghcr.io/ao-analytics/ao-analytics-nats:main
+    image: ghcr.io/ao-analytics/ao-analytics-nats:latest
     restart: unless-stopped
     depends_on:
       - ao-analytics-db
   
   ao-analytics-api:
     container_name: ao-analytics-api
-    image: ghcr.io/ao-analytics/ao-analytics-api:main
+    image: ghcr.io/ao-analytics/ao-analytics-api:latest
     restart: unless-stopped
     depends_on:
       - ao-analytics-db
@@ -35,7 +35,7 @@ services:
 
   ao-analytics-frontend:
     container_name: ao-analytics-frontend
-    image: ghcr.io/ao-analytics/ao-analytics-frontend:main
+    image: ghcr.io/ao-analytics/ao-analytics-frontend:latest
     ports:
       - 8000:80
     restart: unless-stopped
