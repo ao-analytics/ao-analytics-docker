@@ -1,4 +1,45 @@
 services:
+  ao-analytics-certbot:
+    container_name: ao-analytics-certbot
+    image: certbot/certbot:latest
+    environment:
+      - CERTBOT_DOMAINS=staging.veqox.dedyn.io,api.veqox.dedyn.io
+      - CERTBOT_EMAIL=veqoxao@gmail.com
+    volumes:
+      - ./certbot/conf:/etc/letsencrypt
+      - ./certbot/www:/var/www/certbot
+    command:
+      [
+        "certonly",
+        "-n",
+        "--agree-tos",
+        "--email",
+        "$$CERTBOT_EMAIL",
+        "--webroot",
+        "--webroot-path",
+        "/var/www/certbot",
+        "-d",
+        "$$CERTBOT_DOMAINS",
+        "--staging",
+      ]
+    depends_on:
+      - ao-analytics-nginx
+
+  ao-analytics-nginx:
+    container_name: ao-analytics-nginx
+    image: nginx:latest
+    ports:
+      - 80:80
+      - 443:443
+    volumes:
+      - ./nginx/conf.d:/etc/nginx/conf.d
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+      - ./certbot/conf:/etc/nginx/ssl:ro
+      - ./certbot/www:/var/www/certbot:ro
+    depends_on:
+      - ao-analytics-api
+      - ao-analytics-frontend
+
   ao-analytics-db:
     container_name: ao-analytics-db
     image: ghcr.io/ao-analytics/ao-analytics-db:latest
@@ -7,8 +48,8 @@ services:
       - POSTGRES_USER=postgres
       - POSTGRES_DB=ao
     restart: unless-stopped
-    ports:
-      - 5432:5432
+    #ports:
+    #  - 5432:5432
     volumes:
       - ./data:/var/lib/postgresql/data/
 
@@ -38,7 +79,7 @@ services:
       - NATS_PASSWORD=thenewalbiondata
     depends_on:
       - ao-analytics-db
-  
+
   ao-analytics-api:
     container_name: ao-analytics-api
     image: ghcr.io/ao-analytics/ao-analytics-api:latest
@@ -46,16 +87,17 @@ services:
     environment:
       - DATABASE_URL=postgresql://postgres:postgres@ao-analytics-db:5432/ao
       - PORT=8080
-    ports:
-      - 8080:8080
     depends_on:
       - ao-analytics-db
 
   ao-analytics-frontend:
     container_name: ao-analytics-frontend
     image: ghcr.io/ao-analytics/ao-analytics-frontend:latest
-    ports:
-      - 8000:80
+    environment:
+      - HOST=0.0.0.0
+      - PORT=80
+      - PUBLIC_BACKEND_URL=https://api.veqox.dedyn.io
+      - PUBLIC_INTERNAL_URL=http://ao-analytics-api
     restart: unless-stopped
     depends_on:
       - ao-analytics-api
