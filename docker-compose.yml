@@ -14,12 +14,12 @@ services:
         "-n",
         "--agree-tos",
         "--email",
-        "$$CERTBOT_EMAIL",
+        "$CERTBOT_EMAIL",
         "--webroot",
         "--webroot-path",
         "/var/www/certbot",
         "-d",
-        "$$CERTBOT_DOMAINS",
+        "$CERTBOT_DOMAINS",
         "--staging",
       ]
     depends_on:
