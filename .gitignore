@@ -1,2 +1,3 @@
 data
 migrator
+nginx/cache/*

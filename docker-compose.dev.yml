@@ -15,7 +15,9 @@ services:
 
   ao-analytics-db:
     container_name: ao-analytics-db
-    image: ghcr.io/ao-analytics/ao-analytics-db:latest
+    build:
+      context: ../ao-analytics-db
+      dockerfile: Dockerfile
     environment:
       - POSTGRES_PASSWORD=postgres
       - POSTGRES_USER=postgres
@@ -26,7 +28,9 @@ services:
 
   ao-analytics-migrator:
     container_name: ao-analytics-migrator
-    image: ghcr.io/ao-analytics/ao-analytics-migrator:latest
+    build:
+      context: ../ao-analytics-migrator
+      dockerfile: Dockerfile
     environment:
       - DATABASE_URL=postgresql://postgres:postgres@ao-analytics-db:5432/ao
       - LOCATIONS_PATH=data/locations.json
@@ -43,7 +47,9 @@ services:
 
   ao-analytics-nats:
     container_name: ao-analytics-nats
-    image: ghcr.io/ao-analytics/ao-analytics-nats:latest
+    build:
+      context: ../ao-analytics-nats
+      dockerfile: Dockerfile
     restart: unless-stopped
     environment:
       - DATABASE_URL=postgresql://postgres:postgres@ao-analytics-db:5432/ao
@@ -57,7 +63,9 @@ services:
 
   ao-analytics-api:
     container_name: ao-analytics-api
-    image: ghcr.io/ao-analytics/ao-analytics-api:latest
+    build:
+      context: ../ao-analytics-api
+      dockerfile: Dockerfile
     restart: unless-stopped
     environment:
       - DATABASE_URL=postgresql://postgres:postgres@ao-analytics-db:5432/ao
@@ -67,7 +75,9 @@ services:
 
   ao-analytics-frontend:
     container_name: ao-analytics-frontend
-    image: ghcr.io/ao-analytics/ao-analytics-frontend:latest
+    build:
+      context: ../ao-analytics-frontend
+      dockerfile: Dockerfile
     environment:
       - HOST=0.0.0.0
       - PORT=80
