@@ -10,8 +10,10 @@ services:
       - ./nginx/cache:/var/cache/nginx
     restart: unless-stopped
     depends_on:
-      - ao-analytics-frontend
-      - ao-analytics-api
+      ao-analytics-frontend:
+        condition: service_started
+      ao-analytics-api:
+        condition: service_started
 
   ao-analytics-db:
     container_name: ao-analytics-db
@@ -25,6 +27,11 @@ services:
     restart: unless-stopped
     volumes:
       - ./data:/var/lib/postgresql/data/
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   ao-analytics-migrator:
     container_name: ao-analytics-migrator
@@ -43,7 +50,8 @@ services:
       - ./migrator:/data
     restart: no
     depends_on:
-      - ao-analytics-db
+      ao-analytics-db:
+        condition: service_healthy
 
   ao-analytics-nats:
     container_name: ao-analytics-nats
@@ -59,7 +67,10 @@ services:
       - NATS_USER=public
       - NATS_PASSWORD=thenewalbiondata
     depends_on:
-      - ao-analytics-db
+      ao-analytics-db:
+        condition: service_healthy
+      ao-analytics-migrator:
+        condition: service_completed_successfully
 
   ao-analytics-api:
     container_name: ao-analytics-api
@@ -71,7 +82,8 @@ services:
       - DATABASE_URL=postgresql://postgres:postgres@ao-analytics-db:5432/ao
       - PORT=80
     depends_on:
-      - ao-analytics-db
+      ao-analytics-db:
+        condition: service_healthy
 
   ao-analytics-frontend:
     container_name: ao-analytics-frontend
@@ -85,4 +97,5 @@ services:
       - PUBLIC_INTERNAL_URL=http://ao-analytics-api
     restart: unless-stopped
     depends_on:
-      - ao-analytics-api
+      ao-analytics-api:
+        condition: service_started
