@@ -1,3 +1,7 @@
-data
-migrator
-nginx/cache/*
+*
+!docker-compose.yml
+!docker-compose.dev.yml
+!.gitignore
+!nginx
+!nginx/nginx.conf
+!nginx/conf.d/reverse-proxy.conf
