@@ -50,6 +50,7 @@ services:
       - LOCATIONS_URL=https://raw.githubusercontent.com/ao-data/ao-bin-dumps/master/formatted/world.json
       - ITEMS_URL=https://raw.githubusercontent.com/ao-data/ao-bin-dumps/master/items.json
       - LOCALIZATIONS_URL=https://raw.githubusercontent.com/ao-data/ao-bin-dumps/master/formatted/items.json
+      - SKIP_DOWNLOAD_IF_EXISTS=true
     volumes:
       - ./migrator:/data
     restart: no
@@ -81,6 +82,7 @@ services:
     environment:
       - DATABASE_URL=postgresql://postgres:postgres@ao-analytics-db:5432/ao
       - PORT=80
+      - RUST_LOG=3 # info
     depends_on:
       ao-analytics-db:
         condition: service_healthy
