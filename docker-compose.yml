@@ -98,6 +98,7 @@ services:
       - HOST=0.0.0.0
       - PORT=80
       - PUBLIC_BACKEND_URL=http://api.localhost
+      - PUBLIC_RENDER_URL=https://render.${DOMAIN}
       - PUBLIC_INTERNAL_URL=http://ao-analytics-api
     restart: unless-stopped
     depends_on:
