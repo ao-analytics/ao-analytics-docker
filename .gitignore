@@ -1,7 +1,8 @@
 *
 !docker-compose.yml
-!docker-compose.dev.yml
 !.gitignore
 !nginx
 !nginx/nginx.conf
+!nginx/conf.d
 !nginx/conf.d/reverse-proxy.conf
+!README.md

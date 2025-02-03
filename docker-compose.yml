@@ -1,106 +1,100 @@
 services:
-  ao-analytics-nginx:
-    container_name: ao-analytics-nginx
-    image: nginx:latest
-    ports:
-      - 80:80
-    volumes:
-      - ./nginx/conf.d:/etc/nginx/conf.d
-      - ./nginx/nginx.conf:/etc/nginx/nginx.conf
-      - ./nginx/cache:/var/cache/nginx
-    restart: unless-stopped
-    depends_on:
-      ao-analytics-frontend:
-        condition: service_started
-      ao-analytics-api:
-        condition: service_started
+    ao-analytics-nginx:
+        container_name: ao-analytics-nginx
+        image: nginx:latest
+        ports:
+            - 8000:80
+        volumes:
+            - ./nginx/conf.d:/etc/nginx/conf.d
+            - ./nginx/nginx.conf:/etc/nginx/nginx.conf
+            - ./nginx/cache:/var/cache/nginx
+        restart: unless-stopped
+        depends_on:
+            ao-analytics-frontend:
+                condition: service_started
+            ao-analytics-api:
+                condition: service_started
 
-  ao-analytics-db:
-    container_name: ao-analytics-db
-    image: ghcr.io/ao-analytics/ao-analytics-db:latest
-    environment:
-      - POSTGRES_PASSWORD=postgres
-      - POSTGRES_USER=postgres
-      - POSTGRES_DB=ao
-    restart: unless-stopped
-    volumes:
-      - ./data:/var/lib/postgresql/data/
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    deploy:
-      resources:
-        limits:
-          cpus: "0.5"
-          memory: 4GB
-        reservations:
-          cpus: "0.1"
-          memory: 1GB
+    ao-analytics-db:
+        container_name: ao-analytics-db
+        image: ghcr.io/ao-analytics/ao-analytics-db:latest
+        environment:
+            - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+            - POSTGRES_USER=${POSTGRES_USER}
+            - POSTGRES_DB=${POSTGRES_DB}
+        restart: unless-stopped
+        volumes:
+            - ./data:/var/lib/postgresql/data/
+        healthcheck:
+            test: ["CMD-SHELL", "pg_isready -U postgres"]
+            interval: 10s
+            timeout: 5s
+            retries: 5
+        deploy:
+            resources:
+                limits:
+                    cpus: 0.5
+                    memory: 8GB
+                reservations:
+                    cpus: 0.1
+                    memory: 1GB
 
-  ao-analytics-migrator:
-    container_name: ao-analytics-migrator
-    image: ghcr.io/ao-analytics/ao-analytics-migrator:latest
-    environment:
-      - DATABASE_URL=postgresql://postgres:postgres@ao-analytics-db:5432/ao
-      - LOCATIONS_PATH=data/locations.json
-      - ITEMS_PATH=data/items.json
-      - LOCALIZATIONS_PATH=data/localizations.json
-      - LOCATIONS_URL=https://raw.githubusercontent.com/ao-data/ao-bin-dumps/master/formatted/world.json
-      - ITEMS_URL=https://raw.githubusercontent.com/ao-data/ao-bin-dumps/master/items.json
-      - LOCALIZATIONS_URL=https://raw.githubusercontent.com/ao-data/ao-bin-dumps/master/formatted/items.json
-      - SKIP_DOWNLOAD_IF_EXISTS=true
-    volumes:
-      - ./migrator:/data
-    restart: no
-    depends_on:
-      ao-analytics-db:
-        condition: service_healthy
+    ao-analytics-migrator:
+        container_name: ao-analytics-migrator
+        image: ghcr.io/ao-analytics/ao-analytics-migrator:latest
+        environment:
+            - DATABASE_URL=${DATABASE_URL}
+            - LOCATIONS_PATH=data/locations.json
+            - ITEMS_PATH=data/items.json
+            - LOCALIZATIONS_PATH=data/localizations.json
+            - LOCATIONS_URL=https://raw.githubusercontent.com/ao-data/ao-bin-dumps/master/formatted/world.json
+            - ITEMS_URL=https://raw.githubusercontent.com/ao-data/ao-bin-dumps/master/items.json
+            - LOCALIZATIONS_URL=https://raw.githubusercontent.com/ao-data/ao-bin-dumps/master/formatted/items.json
+            - SKIP_DOWNLOAD_IF_EXISTS=true
+        volumes:
+            - ./migrator:/data
+        restart: no
+        depends_on:
+            ao-analytics-db:
+                condition: service_healthy
 
-  ao-analytics-nats:
-    container_name: ao-analytics-nats
-    image: ghcr.io/ao-analytics/ao-analytics-nats:latest
-    restart: unless-stopped
-    environment:
-      - DATABASE_URL=postgresql://postgres:postgres@ao-analytics-db:5432/ao
-      - NATS_URL=nats://public:thenewalbiondata@nats.albion-online-data.com:34222
-      - NATS_MARKET_ORDER_SUBJECT=marketorders.deduped
-      - NATS_MARKET_HISTORY_SUBJECT=markethistories.deduped
-      - NATS_USER=public
-      - NATS_PASSWORD=thenewalbiondata
-    depends_on:
-      ao-analytics-db:
-        condition: service_healthy
-      ao-analytics-migrator:
-        condition: service_completed_successfully
+    ao-analytics-nats:
+        container_name: ao-analytics-nats
+        image: ghcr.io/ao-analytics/ao-analytics-nats:latest
+        restart: unless-stopped
+        environment:
+            - DATABASE_URL=${DATABASE_URL}
+            - NATS_URL=${NATS_URL}
+            - NATS_MARKET_ORDER_SUBJECT=marketorders.deduped
+            - NATS_MARKET_HISTORY_SUBJECT=markethistories.deduped
+            - NATS_USER=${NATS_USER}
+            - NATS_PASSWORD=${NATS_PASSWORD}
+        depends_on:
+            ao-analytics-db:
+                condition: service_healthy
+            ao-analytics-migrator:
+                condition: service_completed_successfully
 
-  ao-analytics-api:
-    container_name: ao-analytics-api
-    image: ghcr.io/ao-analytics/ao-analytics-api:latest
-    restart: unless-stopped
-    environment:
-      - DATABASE_URL=postgresql://postgres:postgres@ao-analytics-db:5432/ao
-      - PORT=80
-      - RUST_LOG=3 # info
-    depends_on:
-      ao-analytics-db:
-        condition: service_healthy
-      ao-analytics-nats:
-        condition: service_started
-      ao-analytics-migrator:
-        condition: service_completed_successfully
+    ao-analytics-api:
+        container_name: ao-analytics-api
+        image: ghcr.io/ao-analytics/ao-analytics-api:latest
+        restart: unless-stopped
+        environment:
+            - DATABASE_URL=${DATABASE_URL}
+            - PORT=80
+        depends_on:
+            ao-analytics-db:
+                condition: service_healthy
+            ao-analytics-migrator:
+                condition: service_completed_successfully
 
-  ao-analytics-frontend:
-    container_name: ao-analytics-frontend
-    image: ghcr.io/ao-analytics/ao-analytics-frontend:latest
-    environment:
-      - HOST=0.0.0.0
-      - PORT=80
-      - PUBLIC_BACKEND_URL=http://api.localhost
-      - PUBLIC_RENDER_URL=https://render.${DOMAIN}
-      - PUBLIC_INTERNAL_URL=http://ao-analytics-api
-    restart: unless-stopped
-    depends_on:
-      ao-analytics-api:
-        condition: service_started
+    ao-analytics-frontend:
+        container_name: ao-analytics-frontend
+        image: ghcr.io/ao-analytics/ao-analytics-frontend:latest
+        environment:
+            - PUBLIC_BACKEND_URL=https://api.${DOMAIN}
+            - PUBLIC_RENDER_URL=https://render.${DOMAIN}
+        restart: unless-stopped
+        depends_on:
+            ao-analytics-api:
+                condition: service_started
