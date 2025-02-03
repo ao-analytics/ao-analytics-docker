@@ -13,4 +13,6 @@ DATABASE_URL=postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${DATABASE_HOST}
 NATS_USER=
 NATS_PASSWORD=
 NATS_URL=
+
+BESZEL_KEY= # optional if you want monitoring with beszel
 ```
